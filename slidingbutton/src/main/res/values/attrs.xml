@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="SlidingButton">
+        <attr name="slider_background" format="reference"/>
+        <attr name="button_background" format="reference"/>
+        <attr name="center_text" format="string"/>
+        <attr name="center_text_color" format="color"/>
+        <attr name="center_text_size" format="dimension"/>
+        <attr name="slider_image_src" format="reference"/>
+        <attr name="slider_image_size" format="dimension"/>
+        <attr name="tips_image_src" format="reference"/>
+        <attr name="tips_image_size" format="dimension"/>
+        <attr name="loading_drawable" format="reference"/>
+        <attr name="loading_size" format="dimension"/>
+    </declare-styleable>
+</resources>

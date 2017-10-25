@@ -1,1 +1,1 @@
-include ':app', ':gestureunlock'
+include ':app', ':gestureunlock', ':slidingbutton'
