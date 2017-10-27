@@ -11,6 +11,8 @@ import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MotionEvent;
+import android.view.View;
+import android.view.animation.AccelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -22,7 +24,7 @@ import cn.bmkp.slidingbutton.R;
  * Created by wangpan on 2017/10/25.
  */
 
-public class SlidingButton extends RelativeLayout {
+public class SlidingButton2 extends RelativeLayout implements View.OnTouchListener {
 
     public static final int NORMAL = 1;
     public static final int LOADING = 2;
@@ -53,24 +55,23 @@ public class SlidingButton extends RelativeLayout {
 
     //当前状态
     private int mState;
-    //滑块宽度
-    private int mSliderWidth;
-    private int mLeftBorder;
-    private int mRightBorder;
-    private int mLastDownX;
-    protected int mRange;
+    //控件宽度
+    private int mWidth;
+
+    private int mTouchX;
+    private int mX;
 
     private OnStateChangedListener mOnStateChangedListener;
 
-    public SlidingButton(Context context) {
+    public SlidingButton2(Context context) {
         this(context, null);
     }
 
-    public SlidingButton(Context context, AttributeSet attrs) {
+    public SlidingButton2(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public SlidingButton(Context context, AttributeSet attrs, int defStyleAttr) {
+    public SlidingButton2(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context, attrs);
     }
@@ -159,83 +160,61 @@ public class SlidingButton extends RelativeLayout {
         addView(mBgSlider);
 
         setState(NORMAL);
+
+        mBgSlider.setOnTouchListener(this);
     }
 
     @Override
-    protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        super.onLayout(changed, l, t, r, b);
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
-        //滑块宽度
-        mSliderWidth = mBgSlider.getWidth();
-        //滑动的左边界
-        mLeftBorder = - mBgSlider.getLeft();
-        //滑动的右边界
-        mRightBorder = mBgSlider.getRight();
-        //区分开或者关的范围
-        mRange = mSliderWidth / 3;
+        mWidth = mBgSlider.getWidth();
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN: {
-                mLastDownX = (int) event.getRawX();
-                break;
+    public boolean onTouch(View v, MotionEvent event) {
+        if (v.getId() == R.id.sliding_button_slider) {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN: {
+                    mTouchX = (int) event.getRawX();
+                    break;
+                }
+                case MotionEvent.ACTION_MOVE: {
+                    int x = (int) event.getRawX();
+                    int dx = x - mTouchX;
+                    int toX = (int) (mBgSlider.getX() + dx);
+                    moveSlider(toX);
+                    mTouchX = x;
+                    break;
+                }
+                case MotionEvent.ACTION_UP: {
+                    updateState();
+                    break;
+                }
             }
-            case MotionEvent.ACTION_MOVE: {
-                int moveX = (int) event.getRawX();
-                int dX = moveX - mLastDownX;
-
-                moveSlider(dX);
-
-                mLastDownX = moveX;
-                break;
-            }
-            case MotionEvent.ACTION_UP: {
-                resetSlider();
-                break;
-            }
+            return true;
         }
-        return true;
+        return false;
     }
 
-    //移动滑块
-    private void moveSlider(int dX) {
-        if(isEnabled() && mState == NORMAL){
-            int l, r = 0;
-            if(mBgSlider.getLeft() + dX <= mLeftBorder){
-                l = mLeftBorder;
-                r = mSliderWidth;
-            }else if(mBgSlider.getLeft() + dX >= mRightBorder){
-                l = mRightBorder;
-                r = mSliderWidth + mRightBorder;
-            }else{
-                l = mBgSlider.getLeft() + dX;
-                r = mBgSlider.getRight() + dX;
-            }
-            int t = mBgSlider.getTop();
-            int b = mBgSlider.getBottom();
-
-            mBgSlider.layout(l, t, r, b);
-        }
+    public void setOnStateChangedListener(OnStateChangedListener listener) {
+        this.mOnStateChangedListener = listener;
     }
 
-    //重置滑块
-    private void resetSlider() {
+    //更新状态
+    private void updateState() {
         ValueAnimator animator = null;
-        if(mBgSlider.getLeft() >= mRange){
-            //开
-            animator = ValueAnimator.ofInt(mBgSlider.getLeft(), mRightBorder);
-            animator.addListener(new MyAnimatorListener(){
+        if (mX >= mWidth / 3) {
+            animator = ValueAnimator.ofInt(mX, mWidth);
+            animator.addListener(new MyAnimatorListener() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     setState(LOADING);
                 }
             });
-        }else{
-            //关
-            animator = ValueAnimator.ofInt(mBgSlider.getLeft(), mLeftBorder);
-            animator.addListener(new MyAnimatorListener(){
+        } else {
+            animator = ValueAnimator.ofInt(mX, 0);
+            animator.addListener(new MyAnimatorListener() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     setState(NORMAL);
@@ -243,29 +222,33 @@ public class SlidingButton extends RelativeLayout {
             });
         }
         animator.setDuration(300);
+        animator.setTarget(mBgSlider);
+        animator.setInterpolator(new AccelerateInterpolator());
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                int value = (int) animation.getAnimatedValue();
-                int l = value;
-                int t = mBgSlider.getTop();
-                int r = mSliderWidth + value;
-                int b = mBgSlider.getBottom();
-                mBgSlider.layout(l, t, r, b);
+                int x = (int) animation.getAnimatedValue();
+                moveSlider(x);
             }
         });
         animator.start();
     }
 
-    public void setOnStateChangedListener(OnStateChangedListener listener) {
-        this.mOnStateChangedListener = listener;
-    }
+    //移动slider
+    private void moveSlider(int toX) {
+        if (toX <= 0) {
+            toX = 0;
+        }
+        if (toX >= mWidth) {
+            toX = mWidth;
+        }
 
-    @Override
-    public void setEnabled(boolean enabled) {
-        super.setEnabled(enabled);
+        //增加透明效果 1.0 -> 0.5
+        float alpha = 1.0f - toX * 0.5f / mWidth;
+        mBgSlider.setAlpha(alpha);
 
-        mBgSlider.setEnabled(enabled);
+        mX = toX;
+        mBgSlider.setX(mX);
     }
 
     /**
@@ -279,8 +262,8 @@ public class SlidingButton extends RelativeLayout {
         }
         mState = state;
         mBgSlider.clearAnimation();
+        mBgSlider.setX(0);
         mBgSlider.setAlpha(1.0f);
-        mBgSlider.layout(mLeftBorder, mBgSlider.getTop(), mRightBorder, mBgSlider.getBottom());
         if (state == NORMAL) {
             mBgSlider.setEnabled(true);
             mIvLoading.setVisibility(GONE);
@@ -299,10 +282,6 @@ public class SlidingButton extends RelativeLayout {
 
     public void setCenterText(String text) {
         mTvCenterText.setText(text);
-    }
-
-    public CharSequence getCenterText() {
-        return mTvCenterText.getText();
     }
 
     private float dp2px(Context context, float val) {

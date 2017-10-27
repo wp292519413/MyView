@@ -24,6 +24,7 @@
         app:tips_image_size="20dp"/>
 
     <LinearLayout
+        android:id="@+id/bottom1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
@@ -40,6 +41,18 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="loading"/>
+
+        <Button
+            android:id="@+id/btn3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="禁用"/>
+
+        <Button
+            android:id="@+id/btn4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="启用"/>
 
     </LinearLayout>
 

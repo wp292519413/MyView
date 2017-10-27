@@ -3,7 +3,6 @@ package cn.bmkp.slidingbutton.activity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.widget.Toast;
 
 import cn.bmkp.slidingbutton.R;
 import cn.bmkp.slidingbutton.widget.SlidingButton;
@@ -11,6 +10,7 @@ import cn.bmkp.slidingbutton.widget.SlidingButton;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, SlidingButton.OnStateChangedListener {
 
     protected SlidingButton mSlidingButton;
+    protected boolean isSimulate;           //是否开启模拟
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,6 +22,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         findViewById(R.id.btn1).setOnClickListener(this);
         findViewById(R.id.btn2).setOnClickListener(this);
+        findViewById(R.id.btn3).setOnClickListener(this);
+        findViewById(R.id.btn4).setOnClickListener(this);
+
+        mSlidingButton.setState(SlidingButton.NORMAL);
+        mSlidingButton.setCenterText("前往乘客起点");
     }
 
     @Override
@@ -33,6 +38,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btn2:
                 mSlidingButton.setState(SlidingButton.LOADING);
                 break;
+            case R.id.btn3:
+                mSlidingButton.setEnabled(false);
+                break;
+            case R.id.btn4:
+                mSlidingButton.setEnabled(true);
+                break;
         }
     }
 
@@ -40,10 +51,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onStateChanged(int state) {
         switch (state) {
             case SlidingButton.NORMAL:
-                Toast.makeText(this, "NORMAL", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(this, "NORMAL", Toast.LENGTH_SHORT).show();
                 break;
             case SlidingButton.LOADING:
-                Toast.makeText(this, "LOADING", Toast.LENGTH_SHORT).show();
+                mSlidingButton.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        mSlidingButton.setState(SlidingButton.NORMAL);
+                        if(mSlidingButton.getCenterText().equals("前往乘客起点")){
+                            mSlidingButton.setCenterText("等待乘客上车");
+                            mSlidingButton.setEnabled(false);
+
+                            mSlidingButton.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mSlidingButton.setEnabled(true);
+                                    mSlidingButton.setCenterText("出发前往目的地");
+                                }
+                            }, 5000);
+                        }else if(mSlidingButton.getCenterText().equals("出发前往目的地")){
+                            mSlidingButton.setCenterText("到达目的地");
+                        }else if(mSlidingButton.getCenterText().equals("到达目的地")){
+                            mSlidingButton.setCenterText("前往乘客起点");
+                        }
+                    }
+                }, 2000);
                 break;
         }
     }
