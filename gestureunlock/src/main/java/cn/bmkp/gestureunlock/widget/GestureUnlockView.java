@@ -3,6 +3,8 @@ package cn.bmkp.gestureunlock.widget;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.PointF;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -128,6 +130,33 @@ public class GestureUnlockView extends View {
         drawUnSelectedPointLine(canvas);
         //画点
         drawPoints(canvas);
+        //画箭头
+        drawArrows(canvas);
+    }
+
+    //画箭头
+    private void drawArrows(Canvas canvas) {
+        if (mSelectedPoints != null && mSelectedPoints.size() > 1) {
+            float angle = 80;
+            int k = 30;
+            float d = mPointDiameter / 4;
+            for (int i = 0; i < mSelectedPoints.size() - 1; i++) {
+                GUVPoint point1 = mSelectedPoints.get(i);
+                GUVPoint point2 = mSelectedPoints.get(i + 1);
+
+                mPaint.setStyle(Paint.Style.FILL);
+                mPaint.setColor(getResources().getColor(R.color.color_2));
+
+                PointF[] points = generateSanJiaoPoints(point1, point2, angle, k, d);
+                Path path = new Path();
+                path.moveTo(points[0].x, points[0].y);
+                path.lineTo(points[1].x, points[1].y);
+                path.lineTo(points[2].x, points[2].y);
+                path.close();
+                canvas.drawPath(path, mPaint);
+            }
+        }
+
     }
 
     //画未选好的点的连线
@@ -329,6 +358,99 @@ public class GestureUnlockView extends View {
     private float getDistance(GUVPoint point1, GUVPoint point2) {
         return (float) Math.sqrt(Math.pow((point2.x - point1.x), 2)
                 + Math.pow((point2.y - point1.y), 2));
+    }
+
+    /**
+     * 根据已知两点和固定边长k求一个等边三角形的三个点坐标
+     *
+     * @param point1 起点
+     * @param point2
+     * @param angle  顶端角度
+     * @param k      斜边长
+     * @param d      底边距起点距离
+     * @return
+     */
+    private PointF[] generateSanJiaoPoints(GUVPoint point1, GUVPoint point2, float angle, int k, float d) {
+        PointF[] points = new PointF[3];
+
+        PointF pointF1, pointF2, pointF3 = null;
+        float dx = point2.x - point1.x;
+        float dy = point2.y - point1.y;
+        if ((dx == 0 && dy != 0) || (dx != 0 && dy == 0)) {
+            if (dx == 0 && dy != 0) {
+                float l0 = 0;
+                if (dy < 0) {
+                    dy = -d;
+                    l0 = -(float) (Math.cos(Math.PI * (angle / 2) / 180) * k);
+                } else {
+                    dy = d;
+                    l0 = (float) (Math.cos(Math.PI * (angle / 2) / 180) * k);
+                }
+                //顶点
+                float x1 = point1.x;
+                float y1 = point1.y + dy + l0;
+                pointF1 = new PointF(x1, y1);
+                //侧边点1
+                float x2 = (float) (point1.x - Math.sin(Math.PI * (angle / 2) / 180) * k);
+                float y2 = point1.y + dy;
+                pointF2 = new PointF(x2, y2);
+                //侧边点2
+                float x3 = (float) (point1.x + Math.sin(Math.PI * (angle / 2) / 180) * k);
+                float y3 = point1.y + dy;
+                pointF3 = new PointF(x3, y3);
+            } else {
+                float l0 = 0;
+                if (dx < 0) {
+                    l0 = -(float) (Math.cos(Math.PI * (angle / 2) / 180) * k);
+                    dx = -d;
+                } else {
+                    dx = d;
+                    l0 = (float) (Math.cos(Math.PI * (angle / 2) / 180) * k);
+                }
+                //顶点
+                float x1 = point1.x + dx + l0;
+                float y1 = point1.y;
+                pointF1 = new PointF(x1, y1);
+                //侧边点1
+                float x2 = point1.x + dx;
+                float y2 = (float) (point1.y - Math.sin(Math.PI * (angle / 2) / 180) * k);
+                pointF2 = new PointF(x2, y2);
+                //侧边点2
+                float x3 = point1.x + dx;
+                float y3 = (float) (point1.y + Math.sin(Math.PI * (angle / 2) / 180) * k);
+                pointF3 = new PointF(x3, y3);
+            }
+        } else if (dx != 0 && dy != 0) {
+            float l0 = (float) Math.sqrt(Math.pow((point2.x - point1.x), 2) + Math.pow((point2.y - point1.y), 2));
+            float l1 = (float) (d + k * Math.cos(Math.PI * (angle / 2) / 180));
+
+            dx = point2.x - point1.x;
+            dy = point2.y - point1.y;
+            //顶点
+            float x1 = point1.x + (l1 * dx / l0);
+            float y1 = point1.y + (l1 * dy / l0);
+            pointF1 = new PointF(x1, y1);
+            //直线与三角形底边的交点
+            float x0 = point1.x + (d * dx / l0);
+            float y0 = point1.y + (d * dy / l0);
+            PointF point0 = new PointF(x0, y0);
+            dx = point0.x - point1.x;
+            dy = point0.y - point1.y;
+            //侧边点1
+            float x2 = (float) (point0.x + ((k * Math.sin(Math.PI * (angle / 2) / 180) * dy) / d));
+            float y2 = (float) (point0.y - ((k * Math.sin(Math.PI * (angle / 2) / 180) * dx) / d));
+            pointF2 = new PointF(x2, y2);
+            //侧边点2
+            float x3 = (float) (point0.x - ((k * Math.sin(Math.PI * (angle / 2) / 180) * dy) / d));
+            float y3 = (float) (point0.y + ((k * Math.sin(Math.PI * (angle / 2) / 180) * dx) / d));
+            pointF3 = new PointF(x3, y3);
+        } else {
+            throw new IllegalArgumentException("两个点不能为同一点");
+        }
+        points[0] = pointF1;
+        points[1] = pointF2;
+        points[2] = pointF3;
+        return points;
     }
 
     /**
