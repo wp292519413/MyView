@@ -27,6 +27,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         mSlidingButton.setState(SlidingButton.NORMAL);
         mSlidingButton.setCenterText("前往乘客起点");
+
+        //Toast.makeText(this, "1", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "2", Toast.LENGTH_SHORT).show();
     }
 
     @Override
