@@ -62,7 +62,7 @@ public class CustomEditTextView extends RelativeLayout implements View.OnClickLi
     private void init(Context context, AttributeSet attrs) {
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.CustomEditTextView);
         mInputType = typedArray.getInt(R.styleable.CustomEditTextView_input_type, INPUT_TYPE_TEXT);
-        mMaxLength = typedArray.getInt(R.styleable.CustomEditTextView_max_length, 6);    //密码长度限制
+        mMaxLength = typedArray.getInt(R.styleable.CustomEditTextView_max_length, Integer.MAX_VALUE);    //密码长度限制
         mTextSize = typedArray.getDimension(R.styleable.CustomEditTextView_text_size, sp2px(context, 14));
         mTextColor = typedArray.getColor(R.styleable.CustomEditTextView_text_color, Color.parseColor("#3D3D3D"));
         mCursorColor = typedArray.getColor(R.styleable.CustomEditTextView_cursor_color, Color.parseColor("#999999"));
@@ -111,29 +111,31 @@ public class CustomEditTextView extends RelativeLayout implements View.OnClickLi
         InputFilter[] filters = {new InputFilter.LengthFilter(mMaxLength)};
         mEditText.setFilters(filters);
 
-        //设置输入限制
-        NumberKeyListener keyListener = new NumberKeyListener() {
-            @Override
-            protected char[] getAcceptedChars() {
-                if (!TextUtils.isEmpty(mDigits)) {
-                    return mDigits.toCharArray();
-                } else {
-                    return new char[0];
+        if(mInputType != INPUT_TYPE_TEXT || !TextUtils.isEmpty(mDigits)){
+            //设置输入限制
+            NumberKeyListener keyListener = new NumberKeyListener() {
+                @Override
+                protected char[] getAcceptedChars() {
+                    if (!TextUtils.isEmpty(mDigits)) {
+                        return mDigits.toCharArray();
+                    } else {
+                        return new char[0];
+                    }
                 }
-            }
 
-            @Override
-            public int getInputType() {
-                if(mInputType == INPUT_TYPE_PHONE){
-                    return EditorInfo.TYPE_CLASS_NUMBER | EditorInfo.TYPE_CLASS_PHONE;
-                }else if(mInputType == INPUT_TYPE_PASSWORD){
-                    return EditorInfo.TYPE_TEXT_VARIATION_PASSWORD;
-                }else{
-                    return EditorInfo.TYPE_CLASS_TEXT;
+                @Override
+                public int getInputType() {
+                    if(mInputType == INPUT_TYPE_PHONE){
+                        return EditorInfo.TYPE_CLASS_NUMBER | EditorInfo.TYPE_CLASS_PHONE;
+                    }else if(mInputType == INPUT_TYPE_PASSWORD){
+                        return EditorInfo.TYPE_TEXT_VARIATION_PASSWORD;
+                    }else{
+                        return EditorInfo.TYPE_CLASS_TEXT;
+                    }
                 }
-            }
-        };
-        mEditText.setKeyListener(keyListener);
+            };
+            mEditText.setKeyListener(keyListener);
+        }
 
         if (mInputType == INPUT_TYPE_PASSWORD) {
             mRlShow.setVisibility(VISIBLE);
