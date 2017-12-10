@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="CustomEditTextView">
+
+        <attr name="input_type">
+            <enum name="text" value="0"/>
+            <enum name="phone" value="1"/>
+            <enum name="password" value="2"/>
+        </attr>
+
+        <attr name="max_length" format="integer"/>
+        <attr name="text_size" format="dimension"/>
+        <attr name="text_color" format="color"/>
+        <attr name="cursor_color" format="color"/>
+        <attr name="hint" format="string"/>
+        <attr name="text" format="string"/>
+        <attr name="digits" format="string"/>
+
+        <attr name="underLine_visibility">
+            <enum name="visible" value="0"/>
+            <enum name="gone" value="8"/>
+        </attr>
+
+        <attr name="cursor_visibility">
+            <enum name="visible" value="0"/>
+            <enum name="gone" value="8"/>
+        </attr>
+
+    </declare-styleable>
+
+</resources>
