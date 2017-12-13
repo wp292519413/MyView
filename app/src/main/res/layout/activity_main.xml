@@ -24,7 +24,6 @@
         android:layout_height="40dp"
         app:input_type="money"
         app:digits=".1234567890"
-        app:min_value="0.001"
         app:max_value="9999.999"
         app:precision="3"
         app:hint="金额"/>

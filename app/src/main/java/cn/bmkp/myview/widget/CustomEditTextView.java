@@ -192,9 +192,7 @@ public class CustomEditTextView extends RelativeLayout implements View.OnClickLi
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.rl_delete) {
-            mEditText.setText("");
-            mEditText.setSelection(0);
-            setEditTextFocus();
+            clearEditText();
         } else if (v.getId() == R.id.rl_show) {
             boolean show = (boolean) mIvShow.getTag();
             if (show) {
@@ -208,6 +206,14 @@ public class CustomEditTextView extends RelativeLayout implements View.OnClickLi
             mEditText.invalidate();
             setEditTextFocus();
         }
+    }
+
+    //清空edittext
+    private void clearEditText() {
+        mEditText.setText("");
+        mEditText.setSelection(0);
+        mBeforeText = "";
+        setEditTextFocus();
     }
 
     //让mEditText获取焦点
@@ -301,7 +307,6 @@ public class CustomEditTextView extends RelativeLayout implements View.OnClickLi
                 }
             }
 
-            //限制最大输入值
             double feeValue = 0;
             try {
                 feeValue = Double.valueOf(str);
@@ -313,7 +318,8 @@ public class CustomEditTextView extends RelativeLayout implements View.OnClickLi
                 return;
             }
 
-            if(feeValue < mMinValue || feeValue > mMaxValue){
+            //限制最大输入值
+            if(feeValue > mMaxValue){
                 mEditText.removeTextChangedListener(this);
                 mEditText.setText(mBeforeText);
                 mEditText.setSelection(mEditText.getText().length());
