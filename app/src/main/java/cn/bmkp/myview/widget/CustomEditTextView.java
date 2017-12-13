@@ -27,6 +27,15 @@ public class CustomEditTextView extends RelativeLayout implements View.OnClickLi
     public static final int INPUT_TYPE_TEXT = 0;
     public static final int INPUT_TYPE_PHONE = 1;
     public static final int INPUT_TYPE_PASSWORD = 2;
+    public static final int INPUT_TYPE_MONEY = 3;
+
+    private final String mPhoneDigits = "1234567890";
+    private final String mPasswordDigits = ".1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private final String mMoneyDigits = ".1234567890";
+
+    private float mMaxValue = 9999.99f;
+    private float mMinValue = 0.00f;
+    private int mPrecision = 2;         //默认金额保留两位小数
 
     private CustomEditText mEditText;
     private RelativeLayout mRlDelete;
@@ -71,6 +80,9 @@ public class CustomEditTextView extends RelativeLayout implements View.OnClickLi
         mEditTextHintText = typedArray.getString(R.styleable.CustomEditTextView_hint);
         mEditTextText = typedArray.getString(R.styleable.CustomEditTextView_text);
         mDigits = typedArray.getString(R.styleable.CustomEditTextView_digits);
+        mMaxValue = typedArray.getFloat(R.styleable.CustomEditTextView_max_value, mMaxValue);
+        mMinValue = typedArray.getFloat(R.styleable.CustomEditTextView_min_value, mMinValue);
+        mPrecision = typedArray.getInt(R.styleable.CustomEditTextView_precision, mPrecision);
         typedArray.recycle();
 
         View view = View.inflate(context, R.layout.view_customer_edit_text, null);
@@ -111,6 +123,24 @@ public class CustomEditTextView extends RelativeLayout implements View.OnClickLi
         InputFilter[] filters = {new InputFilter.LengthFilter(mMaxLength)};
         mEditText.setFilters(filters);
 
+        switch (mInputType) {
+            case INPUT_TYPE_PHONE:
+                if(TextUtils.isEmpty(mDigits)){
+                    mDigits = mPhoneDigits;
+                }
+                break;
+            case INPUT_TYPE_PASSWORD:
+                if(TextUtils.isEmpty(mDigits)){
+                    mDigits = mPasswordDigits;
+                }
+                break;
+            case INPUT_TYPE_MONEY:
+                if(TextUtils.isEmpty(mDigits)){
+                    mDigits = mMoneyDigits;
+                }
+                break;
+        }
+
         if(mInputType != INPUT_TYPE_TEXT || !TextUtils.isEmpty(mDigits)){
             //设置输入限制
             NumberKeyListener keyListener = new NumberKeyListener() {
@@ -129,6 +159,8 @@ public class CustomEditTextView extends RelativeLayout implements View.OnClickLi
                         return EditorInfo.TYPE_CLASS_NUMBER | EditorInfo.TYPE_CLASS_PHONE;
                     }else if(mInputType == INPUT_TYPE_PASSWORD){
                         return EditorInfo.TYPE_TEXT_VARIATION_PASSWORD;
+                    }else if(mInputType == INPUT_TYPE_MONEY){
+                        return EditorInfo.TYPE_CLASS_NUMBER;
                     }else{
                         return EditorInfo.TYPE_CLASS_TEXT;
                     }
@@ -187,9 +219,15 @@ public class CustomEditTextView extends RelativeLayout implements View.OnClickLi
     }
 
     //===============TextWatcher start==============
+    private String mBeforeText = "";
+
     @Override
     public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
+        if(mInputType == INPUT_TYPE_MONEY){
+            if(!TextUtils.isEmpty(s)){
+                mBeforeText = s.toString();
+            }
+        }
     }
 
     @Override
@@ -236,6 +274,52 @@ public class CustomEditTextView extends RelativeLayout implements View.OnClickLi
             mEditText.addTextChangedListener(this);
         } else if (mInputType == INPUT_TYPE_PASSWORD) {
             mEditText.invalidate();
+        } else if(mInputType == INPUT_TYPE_MONEY){
+            //如果第一个输入的是.  就在第一位补齐0
+            if(str.startsWith(".")){
+                mEditText.removeTextChangedListener(this);
+                mEditText.setText("0" + str);
+                mEditText.setSelection(mEditText.getText().length());
+                mEditText.addTextChangedListener(this);
+                str = mEditText.getText().toString();
+            }
+            //限制小数点后面只能输入2位 mPrecision
+            if(str.contains(".")){
+                String[] arr = str.split("\\.");
+                if(arr.length > 1){
+                    String decimals = "";
+                    if(arr[1].length() > mPrecision){
+                        decimals = arr[1].substring(0, mPrecision);
+                    }else{
+                        decimals = arr[1];
+                    }
+                    mEditText.removeTextChangedListener(this);
+                    mEditText.setText(arr[0] + "." + decimals);
+                    mEditText.setSelection(mEditText.getText().length());
+                    mEditText.addTextChangedListener(this);
+                    str = mEditText.getText().toString();
+                }
+            }
+
+            //限制最大输入值
+            double feeValue = 0;
+            try {
+                feeValue = Double.valueOf(str);
+            } catch (Exception e) {
+                mEditText.removeTextChangedListener(this);
+                mEditText.setText(mBeforeText);
+                mEditText.setSelection(mEditText.getText().length());
+                mEditText.addTextChangedListener(this);
+                return;
+            }
+
+            if(feeValue < mMinValue || feeValue > mMaxValue){
+                mEditText.removeTextChangedListener(this);
+                mEditText.setText(mBeforeText);
+                mEditText.setSelection(mEditText.getText().length());
+                mEditText.addTextChangedListener(this);
+                return;
+            }
         }
     }
 

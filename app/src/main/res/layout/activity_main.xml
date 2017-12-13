@@ -5,11 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <cn.bmkp.myview.WaveView
+    <!--<cn.bmkp.myview.WaveView
         android:id="@+id/wave_view1"
         android:layout_centerInParent="true"
         android:layout_width="200dp"
-        android:layout_height="200dp"/>
+        android:layout_height="200dp"/>-->
 
     <cn.bmkp.myview.widget.CustomEditTextView
         android:id="@+id/cet"
@@ -18,12 +18,23 @@
         app:hint="普通"/>
 
     <cn.bmkp.myview.widget.CustomEditTextView
-        android:id="@+id/cet_phone"
+        android:id="@+id/cet_money"
         android:layout_below="@+id/cet"
         android:layout_width="match_parent"
         android:layout_height="40dp"
+        app:input_type="money"
+        app:digits=".1234567890"
+        app:min_value="0.001"
+        app:max_value="9999.999"
+        app:precision="3"
+        app:hint="金额"/>
+
+    <cn.bmkp.myview.widget.CustomEditTextView
+        android:id="@+id/cet_phone"
+        android:layout_below="@+id/cet_money"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
         app:input_type="phone"
-        app:digits="1234567890"
         app:max_length="13"
         app:hint="手机号"/>
 

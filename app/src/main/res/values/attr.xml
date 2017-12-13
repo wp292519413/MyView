@@ -7,6 +7,7 @@
             <enum name="text" value="0"/>
             <enum name="phone" value="1"/>
             <enum name="password" value="2"/>
+            <enum name="money" value="3"/>
         </attr>
 
         <attr name="max_length" format="integer"/>
@@ -16,6 +17,9 @@
         <attr name="hint" format="string"/>
         <attr name="text" format="string"/>
         <attr name="digits" format="string"/>
+        <attr name="max_value" format="float"/>
+        <attr name="min_value" format="float"/>
+        <attr name="precision" format="integer"/>
 
         <attr name="underLine_visibility">
             <enum name="visible" value="0"/>
