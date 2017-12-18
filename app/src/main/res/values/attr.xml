@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <!-- 声明属性 -->
+    <attr name="text_size" format="dimension"/>
+    <attr name="text_color" format="color"/>
+
     <declare-styleable name="CustomEditTextView">
 
         <attr name="input_type">
@@ -11,8 +15,8 @@
         </attr>
 
         <attr name="max_length" format="integer"/>
-        <attr name="text_size" format="dimension"/>
-        <attr name="text_color" format="color"/>
+        <attr name="text_size"/>
+        <attr name="text_color"/>
         <attr name="cursor_color" format="color"/>
         <attr name="hint" format="string"/>
         <attr name="text" format="string"/>
@@ -31,6 +35,17 @@
             <enum name="gone" value="8"/>
         </attr>
 
+    </declare-styleable>
+
+    <declare-styleable name="CodeEditText">
+        <attr name="length" format="integer"/>
+        <attr name="text_size"/>
+        <attr name="text_color"/>
+        <attr name="code_width" format="dimension"/>
+        <attr name="code_height" format="dimension"/>
+        <attr name="margin_left" format="dimension"/>
+        <attr name="background_normal" format="reference"/>
+        <attr name="background_selected" format="reference"/>
     </declare-styleable>
 
 </resources>
