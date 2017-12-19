@@ -11,15 +11,13 @@ import android.text.TextWatcher;
 import android.text.method.KeyListener;
 import android.text.method.NumberKeyListener;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 
 import cn.bmkp.myview.R;
 
@@ -27,20 +25,30 @@ import cn.bmkp.myview.R;
  * Created by wangpan on 2017/12/18.
  */
 
-public class CodeEditText extends RelativeLayout implements View.OnKeyListener, SecurityEditText.OnDelKeyEventListener {
+public class CodeEditText extends LinearLayout implements View.OnKeyListener {
 
-    private final String DIGITS = "0123456789";
-
-    protected LinearLayout mContainerView;
-
+    //每个EditText内容长度
     protected int mLength;
+    //EditText的字体大小
     protected float mTextSize;
+    //EditText的字体颜色
     protected int mTextColor;
+    //EditText相隔距离
     protected float mMarginLeft;
+    //单个EditText宽度
     protected float mCodeWidth;
+    //单个EditText高度
     protected float mCodeHeight;
+    //EditText正常时背景
     protected Drawable mNormalBg;
+    //EditText选中时背景
     protected Drawable mSelectedBg;
+    //EditText输入类型
+    protected int mInputType;
+    //EditText输入内容限制
+    protected String mDigits;
+
+    private int mDefaultPadding;
 
     private int mSelection;
 
@@ -64,50 +72,54 @@ public class CodeEditText extends RelativeLayout implements View.OnKeyListener, 
         mLength = typedArray.getInt(R.styleable.CodeEditText_length, 4);
         mTextSize = typedArray.getDimension(R.styleable.CodeEditText_text_size, dp2px(context, 14));
         mTextColor = typedArray.getColor(R.styleable.CodeEditText_text_color, getResources().getColor(R.color.text_color1));
-        mMarginLeft = typedArray.getDimension(R.styleable.CodeEditText_margin_left, dp2px(context, 12));
-        mCodeWidth = typedArray.getDimension(R.styleable.CodeEditText_code_width, dp2px(context, 36));
-        mCodeHeight = typedArray.getDimension(R.styleable.CodeEditText_code_height, dp2px(context, 36));
+        mMarginLeft = typedArray.getDimension(R.styleable.CodeEditText_margin_left, 0);
+        mCodeWidth = typedArray.getDimension(R.styleable.CodeEditText_code_width, -1);
+        mCodeHeight = typedArray.getDimension(R.styleable.CodeEditText_code_height, -1);
         mNormalBg = typedArray.getDrawable(R.styleable.CodeEditText_background_normal);
         mSelectedBg = typedArray.getDrawable(R.styleable.CodeEditText_background_selected);
+        mInputType = typedArray.getInt(R.styleable.CodeEditText_input_type1, InputType.TYPE_CLASS_NUMBER);
+        mDigits = typedArray.getString(R.styleable.CodeEditText_digits);
         typedArray.recycle();
+
+        mDefaultPadding = (int) dp2px(context, 4);
 
         initView();
     }
 
     private void initView() {
-        mContainerView = new LinearLayout(getContext());
-        mContainerView.setGravity(Gravity.CENTER);
-        mContainerView.setOrientation(LinearLayout.HORIZONTAL);
-        RelativeLayout.LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-        mContainerView.setLayoutParams(params);
-        addView(mContainerView);
+        //设置父布局属性
+        setGravity(Gravity.CENTER);
+        setOrientation(LinearLayout.HORIZONTAL);
 
+        //增加EditText
         for (int i = 0; i < mLength; i++) {
-            SecurityEditText et = new SecurityEditText(getContext());
-            et.setOnDelKeyEventListener(this);
-            //et.setOnKeyListener(this);
-            //et.setCursorVisible(false);
-            //禁止粘贴复制
-            et.setLongClickable(false);
+            long t1 = System.currentTimeMillis();
+            //EditText et = new EditText(getContext());
+            EditText et = (EditText) View.inflate(getContext(), R.layout.view_edit_text, null);
+            long t2 = System.currentTimeMillis();
+            Log.e("tag", "渲染用时t: " + (t2 - t1));
             et.setGravity(Gravity.CENTER);
             et.setTextSize(TypedValue.COMPLEX_UNIT_PX, mTextSize);
             et.setTextColor(mTextColor);
+            //设置最大长度
             et.setFilters(new InputFilter[]{new InputFilter.LengthFilter(1)});
-            KeyListener keyListener = new NumberKeyListener() {
-                @Override
-                protected char[] getAcceptedChars() {
-                    return DIGITS.toCharArray();
-                }
+            //设置输入类型
+            if (!TextUtils.isEmpty(mDigits)) {
+                KeyListener keyListener = new NumberKeyListener() {
+                    @Override
+                    protected char[] getAcceptedChars() {
+                        return mDigits.toCharArray();
+                    }
 
-                @Override
-                public int getInputType() {
-                    return InputType.TYPE_CLASS_NUMBER;
-                }
-            };
-            et.setKeyListener(keyListener);
-            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams((int) mCodeWidth, (int) mCodeHeight);
-            layoutParams.leftMargin = (int) mMarginLeft;
-            et.setLayoutParams(layoutParams);
+                    @Override
+                    public int getInputType() {
+                        return mInputType;
+                    }
+                };
+                et.setKeyListener(keyListener);
+            } else {
+                et.setInputType(mInputType);
+            }
 
             final int index = i;
             et.addTextChangedListener(new TextWatcher() {
@@ -122,10 +134,8 @@ public class CodeEditText extends RelativeLayout implements View.OnKeyListener, 
                         setSelection(index - 1);
                     } else {
                         setSelection(index + 1);
-                        if (index == mLength - 1) {
-                            if (mOnInputCompletedListener != null) {
-                                mOnInputCompletedListener.onInputCompleted(CodeEditText.this, getText());
-                            }
+                        if (mOnInputCompletedListener != null && !TextUtils.isEmpty(getText())) {
+                            mOnInputCompletedListener.onInputCompleted(CodeEditText.this, getText());
                         }
                     }
                 }
@@ -136,70 +146,128 @@ public class CodeEditText extends RelativeLayout implements View.OnKeyListener, 
                 }
             });
 
-            //禁止点击切换选中的EditText 直接把触摸事件消费掉
-            et.setOnTouchListener(new OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    return true;
-                }
-            });
-            /*final int index = i;
             et.setOnFocusChangeListener(new OnFocusChangeListener() {
                 @Override
                 public void onFocusChange(View v, boolean hasFocus) {
-                    if(hasFocus){
+                    if (hasFocus) {
                         setSelection(index);
                     }
                 }
-            });*/
+            });
 
-            //et.setOnKeyListener(this);
-
-            mContainerView.addView(et);
+            et.setOnKeyListener(this);
+            //默认会有padding 不知道为什么
+            et.setPadding(mDefaultPadding, mDefaultPadding, mDefaultPadding, mDefaultPadding);
+            LinearLayout.LayoutParams layoutParams = null;
+            if(mCodeWidth > 0 && mCodeHeight > 0){
+                layoutParams = new LinearLayout.LayoutParams((int) mCodeWidth, (int) mCodeHeight);
+            }else{
+                layoutParams = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+            }
+            if(i != 0){
+                layoutParams.leftMargin = (int) mMarginLeft;
+            }
+            et.setLayoutParams(layoutParams);
+            addView(et);
         }
 
+        //默认选中第一个EditText
         setSelection(0);
     }
 
+    /**
+     * 获取验证码结果<br/>
+     * 如果任何某一个EditText没有值就返回null
+     *
+     * @return
+     */
     public String getText() {
         String result = "";
         for (int i = 0; i < mLength; i++) {
-            EditText child = (EditText) mContainerView.getChildAt(i);
-            result += child.getText().toString();
+            EditText child = (EditText) getChildAt(i);
+            //如果任何某一个EditText没有值就返回空
+            if (TextUtils.isEmpty(child.getText())) {
+                return null;
+            } else {
+                result += child.getText().toString();
+            }
         }
         return result;
     }
 
-    public void clear(){
-        for (int i = 0; i < mLength; i++) {
-            EditText child = (EditText) mContainerView.getChildAt(i);
-            child.setText("");
-            setSelection(0);
+    /**
+     * 设置验证码结果
+     *
+     * @param text
+     */
+    public void setText(String text) {
+        if (!TextUtils.isEmpty(text)) {
+            for (int i = 0; i < mLength; i++) {
+                EditText child = (EditText) getChildAt(i);
+                if (i < text.length()) {
+                    child.setText(String.valueOf(text.charAt(i)));
+                }
+            }
+            setSelection(mLength);
+        } else {
+            clear();
         }
     }
 
-    private void setSelection(int index) {
-        if (index < 0 || index >= mLength) {
-            return;
+    /**
+     * 清空内容并选中第一个EditText
+     */
+    public void clear() {
+        for (int i = 0; i < mLength; i++) {
+            EditText child = (EditText) getChildAt(i);
+            child.setText("");
         }
+        setSelection(0);
+    }
+
+    /**
+     * 请求获取焦点
+     */
+    public void setRequestFocus(){
+        setSelection(mSelection);
+    }
+
+    /**
+     * 获取当前选择的EditText
+     * @return
+     */
+    public EditText getSelectionEditText(){
+        return (EditText) getChildAt(mSelection);
+    }
+
+    /**
+     * 设置当前选中的EditText
+     *
+     * @param index
+     */
+    private void setSelection(int index) {
+        if (index < 0) {
+            index = 0;
+        } else if (index > mLength - 1) {
+            index = mLength - 1;
+        }
+
         this.mSelection = index;
         for (int i = 0; i < mLength; i++) {
-            EditText child = (EditText) mContainerView.getChildAt(i);
+            EditText child = (EditText) getChildAt(i);
             if (i == index) {
                 child.setBackgroundDrawable(mSelectedBg);
                 child.setFocusable(true);
                 child.setFocusableInTouchMode(true);
                 child.requestFocus();
-                showKeyboard(child);
+                child.setSelection(child.getText().length());
             } else {
                 child.setBackgroundDrawable(mNormalBg);
             }
+            if (!TextUtils.isEmpty(child.getText())) {
+                child.setBackgroundDrawable(mSelectedBg);
+            }
         }
-    }
-
-    private void showKeyboard(View view){
-        InputMethodManager imm = (InputMethodManager) view.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.showSoftInput(view, InputMethodManager.SHOW_FORCED);
     }
 
     @Override
@@ -207,7 +275,8 @@ public class CodeEditText extends RelativeLayout implements View.OnKeyListener, 
         switch (event.getAction()) {
             case KeyEvent.ACTION_UP:
                 EditText childEt = (EditText) v;
-                if(keyCode == KeyEvent.KEYCODE_DEL && TextUtils.isEmpty(childEt.getText())){
+                //如果当前EditText没有输入值并且按了DEL删除按键
+                if (keyCode == KeyEvent.KEYCODE_DEL && TextUtils.isEmpty(childEt.getText())) {
                     setSelection(--mSelection);
                     return true;
                 }
@@ -216,13 +285,11 @@ public class CodeEditText extends RelativeLayout implements View.OnKeyListener, 
         return false;
     }
 
-    @Override
-    public void onDeleteClick(SecurityEditText editText) {
-        if(TextUtils.isEmpty(editText.getText())){
-            setSelection(--mSelection);
-        }
-    }
-
+    /**
+     * 设置输入完成监听
+     *
+     * @param listener
+     */
     public void setOnInputCompletedListener(OnInputCompletedListener listener) {
         this.mOnInputCompletedListener = listener;
     }
@@ -230,12 +297,12 @@ public class CodeEditText extends RelativeLayout implements View.OnKeyListener, 
     public interface OnInputCompletedListener {
 
         /**
-         * 输入完成
+         * 输入完成时会回调
          *
-         * @param codeEditTextView
+         * @param codeEditText
          * @param text
          */
-        void onInputCompleted(CodeEditText codeEditTextView, String text);
+        void onInputCompleted(CodeEditText codeEditText, String text);
     }
 
     private float dp2px(Context context, float val) {

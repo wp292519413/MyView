@@ -4,6 +4,7 @@
     <!-- 声明属性 -->
     <attr name="text_size" format="dimension"/>
     <attr name="text_color" format="color"/>
+    <attr name="digits" format="string"/>
 
     <declare-styleable name="CustomEditTextView">
 
@@ -20,7 +21,7 @@
         <attr name="cursor_color" format="color"/>
         <attr name="hint" format="string"/>
         <attr name="text" format="string"/>
-        <attr name="digits" format="string"/>
+        <attr name="digits"/>
         <attr name="max_value" format="float"/>
         <attr name="min_value" format="float"/>
         <attr name="precision" format="integer"/>
@@ -46,6 +47,11 @@
         <attr name="margin_left" format="dimension"/>
         <attr name="background_normal" format="reference"/>
         <attr name="background_selected" format="reference"/>
+        <attr name="digits"/>
+        <attr name="input_type1">
+            <enum name="text" value="1"/>
+            <enum name="number" value="2"/>
+        </attr>
     </declare-styleable>
 
 </resources>
