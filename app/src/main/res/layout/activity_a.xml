@@ -9,7 +9,7 @@
         android:id="@+id/cet"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
+        android:layout_marginTop="32dp"
         android:background="@drawable/bg_shape"
         app:background_normal="@drawable/bg_normal_line"
         app:background_selected="@drawable/bg_selected_line"
@@ -20,5 +20,6 @@
         app:margin_left="12dp"
         app:text_color="@color/text_color1"
         app:text_size="28sp"/>
+
 
 </RelativeLayout>

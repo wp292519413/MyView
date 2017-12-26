@@ -93,11 +93,8 @@ public class CodeEditText extends LinearLayout implements View.OnKeyListener {
 
         //增加EditText
         for (int i = 0; i < mLength; i++) {
-            long t1 = System.currentTimeMillis();
             //EditText et = new EditText(getContext());
             EditText et = (EditText) View.inflate(getContext(), R.layout.view_edit_text, null);
-            long t2 = System.currentTimeMillis();
-            Log.e("tag", "渲染用时t: " + (t2 - t1));
             et.setGravity(Gravity.CENTER);
             et.setTextSize(TypedValue.COMPLEX_UNIT_PX, mTextSize);
             et.setTextColor(mTextColor);

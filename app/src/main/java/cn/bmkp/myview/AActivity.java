@@ -7,13 +7,15 @@ import cn.bmkp.myview.widget.CodeEditText;
 
 public class AActivity extends AppCompatActivity {
 
+    protected CodeEditText mCodeEditText;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_a);
 
-        final CodeEditText codeEditText = (CodeEditText) findViewById(R.id.cet);
-        codeEditText.setOnInputCompletedListener(new CodeEditText.OnInputCompletedListener() {
+        mCodeEditText = (CodeEditText) findViewById(R.id.cet);
+        mCodeEditText.setOnInputCompletedListener(new CodeEditText.OnInputCompletedListener() {
             @Override
             public void onInputCompleted(CodeEditText codeEditText, String text) {
                 /*Log.e("tag", "text: " + text);
@@ -25,11 +27,11 @@ public class AActivity extends AppCompatActivity {
                 }*/
             }
         });
-        codeEditText.setText("58205288");
-        codeEditText.postDelayed(new Runnable() {
+        mCodeEditText.setText("58205288");
+        mCodeEditText.postDelayed(new Runnable() {
             @Override
             public void run() {
-                codeEditText.setText("");
+                mCodeEditText.setText("");
             }
         }, 2000);
     }
