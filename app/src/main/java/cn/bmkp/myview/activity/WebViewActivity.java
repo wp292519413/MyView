@@ -122,7 +122,7 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         if(mWebView.canGoBack()){
             mWebView.goBack();
         }else{
-            onBackPressed();
+            super.onBackPressed();
         }
     }
 
