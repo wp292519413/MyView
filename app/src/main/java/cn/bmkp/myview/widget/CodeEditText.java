@@ -4,14 +4,12 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.text.Editable;
-import android.text.InputFilter;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.method.KeyListener;
 import android.text.method.NumberKeyListener;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -47,6 +45,8 @@ public class CodeEditText extends LinearLayout implements View.OnKeyListener {
     protected int mInputType;
     //EditText输入内容限制
     protected String mDigits;
+    //EditText输入框的长度限制 默认只能输入一个字符
+    protected int mInputLength = 1;     //TODO 后期看能不能写成配置参数形式
 
     private int mDefaultPadding;
 
@@ -93,13 +93,16 @@ public class CodeEditText extends LinearLayout implements View.OnKeyListener {
 
         //增加EditText
         for (int i = 0; i < mLength; i++) {
-            //EditText et = new EditText(getContext());
-            EditText et = (EditText) View.inflate(getContext(), R.layout.view_edit_text, null);
+            final EditText et = new EditText(getContext());
+            //final EditText et = (EditText) View.inflate(getContext(), R.layout.view_edit_text, null);
             et.setGravity(Gravity.CENTER);
             et.setTextSize(TypedValue.COMPLEX_UNIT_PX, mTextSize);
             et.setTextColor(mTextColor);
             //设置最大长度
-            et.setFilters(new InputFilter[]{new InputFilter.LengthFilter(1)});
+            /*if(mInputLength <= 0){
+                mInputLength = 1;
+            }
+            et.setFilters(new InputFilter[]{new InputFilter.LengthFilter(mInputLength)});*/
             //设置输入类型
             if (!TextUtils.isEmpty(mDigits)) {
                 KeyListener keyListener = new NumberKeyListener() {
@@ -130,9 +133,21 @@ public class CodeEditText extends LinearLayout implements View.OnKeyListener {
                     if (TextUtils.isEmpty(s)) {
                         setSelection(index - 1);
                     } else {
-                        setSelection(index + 1);
-                        if (mOnInputCompletedListener != null && !TextUtils.isEmpty(getText())) {
-                            mOnInputCompletedListener.onInputCompleted(CodeEditText.this, getText());
+                        CharSequence s1 = s.subSequence(start, start + count);
+                        if(s1.length() > mInputLength){
+                            s1 = s1.subSequence(s1.length() - mInputLength, s1.length());
+                        }
+                        et.removeTextChangedListener(this);
+                        et.setText(s1);
+                        et.setSelection(et.getText().length());
+                        et.addTextChangedListener(this);
+                        s = s1;
+
+                        if(s.length() == mInputLength){
+                            setSelection(index + 1);
+                            if (mOnInputCompletedListener != null && !TextUtils.isEmpty(getText())) {
+                                mOnInputCompletedListener.onInputCompleted(CodeEditText.this, getText());
+                            }
                         }
                     }
                 }
@@ -212,6 +227,17 @@ public class CodeEditText extends LinearLayout implements View.OnKeyListener {
     }
 
     /**
+     * 设置CodeView的状态
+     * @param enabled
+     */
+    public void setEnabled(boolean enabled){
+        for (int i = 0; i < mLength; i++) {
+            getChildAt(i).setEnabled(enabled);
+        }
+        super.setEnabled(enabled);
+    }
+
+    /**
      * 清空内容并选中第一个EditText
      */
     public void clear() {
@@ -276,6 +302,8 @@ public class CodeEditText extends LinearLayout implements View.OnKeyListener {
                 if (keyCode == KeyEvent.KEYCODE_DEL && TextUtils.isEmpty(childEt.getText())) {
                     setSelection(--mSelection);
                     return true;
+                }else if(keyCode == KeyEvent.KEYCODE_DEL && !TextUtils.isEmpty(childEt.getText())){
+
                 }
                 break;
         }

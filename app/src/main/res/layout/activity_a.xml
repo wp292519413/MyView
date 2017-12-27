@@ -10,16 +10,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
-        android:background="@drawable/bg_shape"
-        app:background_normal="@drawable/bg_normal_line"
-        app:background_selected="@drawable/bg_selected_line"
+        app:background_normal="@drawable/bg_normal_shape"
+        app:background_selected="@drawable/bg_selected_shape"
         app:code_height="40dp"
-        app:code_width="32dp"
-        app:input_type1="text"
+        app:code_width="40dp"
+        app:input_type1="number"
         app:length="6"
-        app:margin_left="12dp"
+        app:margin_left="8dp"
         app:text_color="@color/text_color1"
-        app:text_size="28sp"/>
-
+        app:text_size="20sp"/>
 
 </RelativeLayout>

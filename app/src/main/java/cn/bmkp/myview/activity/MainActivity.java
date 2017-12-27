@@ -1,8 +1,10 @@
-package cn.bmkp.myview;
+package cn.bmkp.myview.activity;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
+import cn.bmkp.myview.R;
+import cn.bmkp.myview.WaveView;
 import cn.bmkp.myview.widget.CustomEditTextView;
 
 public class MainActivity extends AppCompatActivity {

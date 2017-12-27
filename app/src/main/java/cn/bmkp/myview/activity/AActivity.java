@@ -1,8 +1,10 @@
-package cn.bmkp.myview;
+package cn.bmkp.myview.activity;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
+import cn.bmkp.myview.R;
 import cn.bmkp.myview.widget.CodeEditText;
 
 public class AActivity extends AppCompatActivity {
@@ -18,8 +20,8 @@ public class AActivity extends AppCompatActivity {
         mCodeEditText.setOnInputCompletedListener(new CodeEditText.OnInputCompletedListener() {
             @Override
             public void onInputCompleted(CodeEditText codeEditText, String text) {
-                /*Log.e("tag", "text: " + text);
-                if("1111".equals(text)){
+                Log.e("tag", "text: " + text);
+                /*if("1111".equals(text)){
                     Toast.makeText(AActivity.this, "验证码正确", Toast.LENGTH_SHORT).show();
                 }else{
                     Toast.makeText(AActivity.this, "验证码不正确", Toast.LENGTH_SHORT).show();
@@ -27,13 +29,13 @@ public class AActivity extends AppCompatActivity {
                 }*/
             }
         });
-        mCodeEditText.setText("58205288");
+        /*mCodeEditText.setText("58205288");
         mCodeEditText.postDelayed(new Runnable() {
             @Override
             public void run() {
                 mCodeEditText.setText("");
             }
-        }, 2000);
+        }, 2000);*/
     }
 
 }
