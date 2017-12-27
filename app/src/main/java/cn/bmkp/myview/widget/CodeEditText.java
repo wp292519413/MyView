@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.text.Editable;
+import android.text.InputFilter;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -94,15 +95,14 @@ public class CodeEditText extends LinearLayout implements View.OnKeyListener {
         //增加EditText
         for (int i = 0; i < mLength; i++) {
             final EditText et = new EditText(getContext());
-            //final EditText et = (EditText) View.inflate(getContext(), R.layout.view_edit_text, null);
             et.setGravity(Gravity.CENTER);
             et.setTextSize(TypedValue.COMPLEX_UNIT_PX, mTextSize);
             et.setTextColor(mTextColor);
             //设置最大长度
-            /*if(mInputLength <= 0){
+            if(mInputLength <= 0){
                 mInputLength = 1;
             }
-            et.setFilters(new InputFilter[]{new InputFilter.LengthFilter(mInputLength)});*/
+            et.setFilters(new InputFilter[]{new InputFilter.LengthFilter(mInputLength)});
             //设置输入类型
             if (!TextUtils.isEmpty(mDigits)) {
                 KeyListener keyListener = new NumberKeyListener() {
@@ -133,6 +133,15 @@ public class CodeEditText extends LinearLayout implements View.OnKeyListener {
                     if (TextUtils.isEmpty(s)) {
                         setSelection(index - 1);
                     } else {
+                        setSelection(index + 1);
+                        if (mOnInputCompletedListener != null && !TextUtils.isEmpty(getText())) {
+                            mOnInputCompletedListener.onInputCompleted(CodeEditText.this, getText());
+                        }
+                    }
+                    /*if (TextUtils.isEmpty(s)) {
+                        setSelection(index - 1);
+                    } else {
+                        //新输入的内容(包含普通输入, 复制粘贴增加输入, 复制粘贴替换输入)
                         CharSequence s1 = s.subSequence(start, start + count);
                         if(s1.length() > mInputLength){
                             s1 = s1.subSequence(s1.length() - mInputLength, s1.length());
@@ -149,7 +158,7 @@ public class CodeEditText extends LinearLayout implements View.OnKeyListener {
                                 mOnInputCompletedListener.onInputCompleted(CodeEditText.this, getText());
                             }
                         }
-                    }
+                    }*/
                 }
 
                 @Override
@@ -227,17 +236,6 @@ public class CodeEditText extends LinearLayout implements View.OnKeyListener {
     }
 
     /**
-     * 设置CodeView的状态
-     * @param enabled
-     */
-    public void setEnabled(boolean enabled){
-        for (int i = 0; i < mLength; i++) {
-            getChildAt(i).setEnabled(enabled);
-        }
-        super.setEnabled(enabled);
-    }
-
-    /**
      * 清空内容并选中第一个EditText
      */
     public void clear() {
@@ -261,6 +259,17 @@ public class CodeEditText extends LinearLayout implements View.OnKeyListener {
      */
     public EditText getSelectionEditText(){
         return (EditText) getChildAt(mSelection);
+    }
+
+    /**
+     * 设置CodeView的状态
+     * @param enabled
+     */
+    public void setEnabled(boolean enabled){
+        for (int i = 0; i < mLength; i++) {
+            getChildAt(i).setEnabled(enabled);
+        }
+        super.setEnabled(enabled);
     }
 
     /**
@@ -302,8 +311,6 @@ public class CodeEditText extends LinearLayout implements View.OnKeyListener {
                 if (keyCode == KeyEvent.KEYCODE_DEL && TextUtils.isEmpty(childEt.getText())) {
                     setSelection(--mSelection);
                     return true;
-                }else if(keyCode == KeyEvent.KEYCODE_DEL && !TextUtils.isEmpty(childEt.getText())){
-
                 }
                 break;
         }

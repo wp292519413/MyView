@@ -19,8 +19,15 @@ public class AActivity extends AppCompatActivity {
         mCodeEditText = (CodeEditText) findViewById(R.id.cet);
         mCodeEditText.setOnInputCompletedListener(new CodeEditText.OnInputCompletedListener() {
             @Override
-            public void onInputCompleted(CodeEditText codeEditText, String text) {
+            public void onInputCompleted(final CodeEditText codeEditText, String text) {
+                codeEditText.setEnabled(false);
                 Log.e("tag", "text: " + text);
+                codeEditText.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        codeEditText.setEnabled(true);
+                    }
+                }, 1000);
                 /*if("1111".equals(text)){
                     Toast.makeText(AActivity.this, "验证码正确", Toast.LENGTH_SHORT).show();
                 }else{
