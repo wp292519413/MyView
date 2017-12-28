@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -30,17 +31,17 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:singleLine="true"
-            android:textSize="16sp"
+            android:ellipsize="end"
             android:maxEms="12"
-            android:ellipsize="end"/>
+            android:singleLine="true"
+            android:textSize="16sp"/>
 
         <RelativeLayout
             android:id="@+id/rl_refresh"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:layout_centerVertical="true"
             android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
             android:layout_marginRight="14dp">
 
             <ImageView
@@ -59,7 +60,7 @@
 
     </RelativeLayout>
 
-    <RelativeLayout
+    <!--<RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@+id/rl_title">
@@ -75,8 +76,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:visibility="gone"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:visibility="gone">
 
             <Button
                 android:id="@+id/btn_reload"
@@ -99,10 +100,17 @@
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="2dp"
+        android:layout_below="@+id/rl_title"
         android:indeterminateOnly="false"
-        android:visibility="gone"
         android:max="100"
         android:progressDrawable="@drawable/progress_bar_states"
-        android:layout_below="@+id/rl_title"/>
+        android:visibility="gone"/>-->
+
+    <cn.bmkp.myview.widget.CustomWebView
+        android:id="@+id/customWebView"
+        android:layout_below="@+id/rl_title"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:show_progress="true"/>
 
 </RelativeLayout>

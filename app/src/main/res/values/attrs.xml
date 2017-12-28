@@ -54,4 +54,9 @@
         </attr>
     </declare-styleable>
 
+    <declare-styleable name="CustomWebView">
+        <attr name="show_progress" format="boolean"/>
+        <attr name="progress_drawable" format="reference"/>
+    </declare-styleable>
+
 </resources>

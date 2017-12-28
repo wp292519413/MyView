@@ -1,30 +1,21 @@
 package cn.bmkp.myview.activity;
 
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.webkit.WebChromeClient;
-import android.webkit.WebResourceError;
-import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import cn.bmkp.myview.R;
+import cn.bmkp.myview.widget.CustomWebView;
 
 public class WebViewActivity extends AppCompatActivity implements View.OnClickListener {
 
     private final String URL = "https://www.baidu.com";
 
     protected TextView mTvTitle;
-    protected WebView mWebView;
-    protected ProgressBar mProgressBar;
-    protected LinearLayout mLlError;
-
-    private boolean mLoadError;
+    protected CustomWebView mCustomWebView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,11 +29,8 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         mTvTitle = (TextView) findViewById(R.id.tv_title);
         findViewById(R.id.rl_back).setOnClickListener(this);
         findViewById(R.id.rl_refresh).setOnClickListener(this);
-        mProgressBar = (ProgressBar) findViewById(R.id.pb);
-        mWebView = (WebView) findViewById(R.id.webView);
-        mLlError = (LinearLayout) findViewById(R.id.ll_error);
-        findViewById(R.id.btn_reload).setOnClickListener(this);
-        findViewById(R.id.btn_close).setOnClickListener(this);
+        mCustomWebView = (CustomWebView) findViewById(R.id.customWebView);
+        mCustomWebView.setErrorLayout(R.layout.view_error);
 
         initWebView();
     }
@@ -52,52 +40,17 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
     }
 
     private void initWebView() {
-        mWebView.setWebViewClient(new WebViewClient(){
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                view.loadUrl(url);
-                return true;
-            }
-
-            @Override
-            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                mLoadError = true;
-            }
-
-            @Override
-            public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                mLoadError = false;
-            }
-
+        mCustomWebView.setWebViewClient(new WebViewClient(){
             @Override
             public void onPageFinished(WebView view, String url) {
-                if(mLoadError){
-                    setWebTitle("出错啦!!!");
-                    mLlError.setVisibility(View.VISIBLE);
-                    mWebView.setVisibility(View.GONE);
+                if(mCustomWebView.isLoadError()){
+                    setWebTitle("出错啦!!");
                 }else{
-                    setWebTitle(view.getTitle());
-                    mLlError.setVisibility(View.GONE);
-                    mWebView.setVisibility(View.VISIBLE);
-                }
-            }
-
-        });
-
-        mWebView.setWebChromeClient(new WebChromeClient(){
-            @Override
-            public void onProgressChanged(WebView view, int newProgress) {
-                mProgressBar.setProgress(newProgress);
-                if(newProgress == 100){
-                    mProgressBar.setVisibility(View.GONE);
-                }else{
-                    mProgressBar.setVisibility(View.VISIBLE);
-
+                    setWebTitle(mCustomWebView.getTitle());
                 }
             }
         });
-
-        mWebView.loadUrl(URL);
+        mCustomWebView.loadUrl(URL);
     }
 
     @Override
@@ -109,25 +62,19 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
             case R.id.rl_refresh:
                 refresh();
                 break;
-            case R.id.btn_reload:
-                refresh();
-                break;
-            case R.id.btn_close:
-                finish();
-                break;
         }
     }
 
     private void goBack() {
-        if(mWebView.canGoBack()){
-            mWebView.goBack();
+        if(mCustomWebView.canGoBack()){
+            mCustomWebView.goBack();
         }else{
             super.onBackPressed();
         }
     }
 
     private void refresh() {
-        mWebView.reload();
+        mCustomWebView.reload();
     }
 
     @Override
