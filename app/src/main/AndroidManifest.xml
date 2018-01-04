@@ -21,9 +21,11 @@
         <activity android:name=".activity.BActivity">
         </activity>
         <activity android:name=".activity.WebViewActivity">
-
         </activity>
         <activity android:name=".activity.WebActivity">
+
+        </activity>
+        <activity android:name=".ywt.YWTActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
