@@ -46,8 +46,8 @@ public class CodeEditText extends LinearLayout implements View.OnKeyListener {
     protected int mInputType;
     //EditText输入内容限制
     protected String mDigits;
-    //EditText输入框的长度限制 默认只能输入一个字符
-    protected int mInputLength = 1;     //TODO 后期看能不能写成配置参数形式
+    //单个EditText输入框的长度限制 默认只能输入一个字符
+    protected int mInputLength = 1;
 
     private int mDefaultPadding;
 
@@ -99,9 +99,6 @@ public class CodeEditText extends LinearLayout implements View.OnKeyListener {
             et.setTextSize(TypedValue.COMPLEX_UNIT_PX, mTextSize);
             et.setTextColor(mTextColor);
             //设置最大长度
-            if(mInputLength <= 0){
-                mInputLength = 1;
-            }
             et.setFilters(new InputFilter[]{new InputFilter.LengthFilter(mInputLength)});
             //设置输入类型
             if (!TextUtils.isEmpty(mDigits)) {
@@ -130,35 +127,12 @@ public class CodeEditText extends LinearLayout implements View.OnKeyListener {
 
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    if (TextUtils.isEmpty(s)) {
-                        setSelection(index - 1);
-                    } else {
+                    if (!TextUtils.isEmpty(s)) {
                         setSelection(index + 1);
                         if (mOnInputCompletedListener != null && !TextUtils.isEmpty(getText())) {
                             mOnInputCompletedListener.onInputCompleted(CodeEditText.this, getText());
                         }
                     }
-                    /*if (TextUtils.isEmpty(s)) {
-                        setSelection(index - 1);
-                    } else {
-                        //新输入的内容(包含普通输入, 复制粘贴增加输入, 复制粘贴替换输入)
-                        CharSequence s1 = s.subSequence(start, start + count);
-                        if(s1.length() > mInputLength){
-                            s1 = s1.subSequence(s1.length() - mInputLength, s1.length());
-                        }
-                        et.removeTextChangedListener(this);
-                        et.setText(s1);
-                        et.setSelection(et.getText().length());
-                        et.addTextChangedListener(this);
-                        s = s1;
-
-                        if(s.length() == mInputLength){
-                            setSelection(index + 1);
-                            if (mOnInputCompletedListener != null && !TextUtils.isEmpty(getText())) {
-                                mOnInputCompletedListener.onInputCompleted(CodeEditText.this, getText());
-                            }
-                        }
-                    }*/
                 }
 
                 @Override
@@ -180,12 +154,12 @@ public class CodeEditText extends LinearLayout implements View.OnKeyListener {
             //默认会有padding 不知道为什么
             et.setPadding(mDefaultPadding, mDefaultPadding, mDefaultPadding, mDefaultPadding);
             LinearLayout.LayoutParams layoutParams = null;
-            if(mCodeWidth > 0 && mCodeHeight > 0){
+            if (mCodeWidth > 0 && mCodeHeight > 0) {
                 layoutParams = new LinearLayout.LayoutParams((int) mCodeWidth, (int) mCodeHeight);
-            }else{
+            } else {
                 layoutParams = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
             }
-            if(i != 0){
+            if (i != 0) {
                 layoutParams.leftMargin = (int) mMarginLeft;
             }
             et.setLayoutParams(layoutParams);
@@ -206,9 +180,9 @@ public class CodeEditText extends LinearLayout implements View.OnKeyListener {
         String result = "";
         for (int i = 0; i < mLength; i++) {
             EditText child = (EditText) getChildAt(i);
-            //如果任何某一个EditText没有值就返回空
+            //如果任何一个EditText没有值就返回空
             if (TextUtils.isEmpty(child.getText())) {
-                return null;
+                return "";
             } else {
                 result += child.getText().toString();
             }
@@ -223,13 +197,18 @@ public class CodeEditText extends LinearLayout implements View.OnKeyListener {
      */
     public void setText(String text) {
         if (!TextUtils.isEmpty(text)) {
-            for (int i = 0; i < mLength; i++) {
-                EditText child = (EditText) getChildAt(i);
-                if (i < text.length()) {
-                    child.setText(String.valueOf(text.charAt(i)));
+            int selection = 0;
+            for (int i = 0; i < text.length(); i++) {
+                if (i < mLength) {
+                    selection = i;
+                    EditText child = (EditText) getChildAt(i);
+                    String code = String.valueOf(text.charAt(i));
+                    child.setText(code);
+                } else {
+                    break;
                 }
             }
-            setSelection(mLength);
+            setSelection(++selection);
         } else {
             clear();
         }
@@ -249,23 +228,25 @@ public class CodeEditText extends LinearLayout implements View.OnKeyListener {
     /**
      * 请求获取焦点
      */
-    public void setRequestFocus(){
+    public void setRequestFocus() {
         setSelection(mSelection);
     }
 
     /**
      * 获取当前选择的EditText
+     *
      * @return
      */
-    public EditText getSelectionEditText(){
+    public EditText getSelectionEditText() {
         return (EditText) getChildAt(mSelection);
     }
 
     /**
      * 设置CodeView的状态
+     *
      * @param enabled
      */
-    public void setEnabled(boolean enabled){
+    public void setEnabled(boolean enabled) {
         for (int i = 0; i < mLength; i++) {
             getChildAt(i).setEnabled(enabled);
         }
@@ -305,12 +286,17 @@ public class CodeEditText extends LinearLayout implements View.OnKeyListener {
     @Override
     public boolean onKey(View v, int keyCode, KeyEvent event) {
         switch (event.getAction()) {
-            case KeyEvent.ACTION_UP:
+            case KeyEvent.ACTION_DOWN:
                 EditText childEt = (EditText) v;
                 //如果当前EditText没有输入值并且按了DEL删除按键
                 if (keyCode == KeyEvent.KEYCODE_DEL && TextUtils.isEmpty(childEt.getText())) {
-                    setSelection(--mSelection);
-                    return true;
+                    int index = --mSelection;
+                    if (index >= 0) {
+                        EditText editText = (EditText) getChildAt(index);
+                        editText.setText("");
+                        setSelection(index);
+                        return true;
+                    }
                 }
                 break;
         }

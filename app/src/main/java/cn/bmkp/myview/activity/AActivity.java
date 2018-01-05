@@ -29,13 +29,13 @@ public class AActivity extends AppCompatActivity {
                 }*/
             }
         });
-        /*mCodeEditText.setText("58205288");
+        /*mCodeEditText.setText("5820");
         mCodeEditText.postDelayed(new Runnable() {
             @Override
             public void run() {
                 mCodeEditText.setText("");
             }
         }, 2000);*/
-    }
 
+    }
 }
