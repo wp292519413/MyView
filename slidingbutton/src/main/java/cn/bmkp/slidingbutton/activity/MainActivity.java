@@ -63,22 +63,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         mSlidingButton.setState(SlidingButton.NORMAL);
                         if(mSlidingButton.getCenterText().equals("前往乘客起点")){
                             mSlidingButton.setCenterText("等待乘客上车");
-                            mSlidingButton.setEnabled(false);
+                            //mSlidingButton.setEnabled(false);
 
-                            mSlidingButton.postDelayed(new Runnable() {
+                            /*mSlidingButton.postDelayed(new Runnable() {
                                 @Override
                                 public void run() {
                                     mSlidingButton.setEnabled(true);
                                     mSlidingButton.setCenterText("出发前往目的地");
                                 }
-                            }, 5000);
+                            }, 500);*/
                         }else if(mSlidingButton.getCenterText().equals("出发前往目的地")){
                             mSlidingButton.setCenterText("到达目的地");
                         }else if(mSlidingButton.getCenterText().equals("到达目的地")){
                             mSlidingButton.setCenterText("前往乘客起点");
                         }
                     }
-                }, 2000);
+                }, 200);
                 break;
         }
     }

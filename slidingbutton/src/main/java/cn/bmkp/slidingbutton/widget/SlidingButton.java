@@ -4,13 +4,16 @@ import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MotionEvent;
+import android.view.VelocityTracker;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -58,9 +61,9 @@ public class SlidingButton extends RelativeLayout {
     private int mLeftBorder;
     private int mRightBorder;
     private int mLastDownX;
-    protected int mRange;
 
     private OnStateChangedListener mOnStateChangedListener;
+    protected VelocityTracker mVelocityTracker;
 
     public SlidingButton(Context context) {
         this(context, null);
@@ -171,18 +174,24 @@ public class SlidingButton extends RelativeLayout {
         mLeftBorder = - mBgSlider.getLeft();
         //滑动的右边界
         mRightBorder = mBgSlider.getRight();
-        //区分开或者关的范围
-        mRange = mSliderWidth / 3;
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN: {
+                if(mVelocityTracker == null){
+                    mVelocityTracker = VelocityTracker.obtain();
+                }else{
+                    mVelocityTracker.clear();
+                }
+                mVelocityTracker.addMovement(event);
                 mLastDownX = (int) event.getRawX();
                 break;
             }
             case MotionEvent.ACTION_MOVE: {
+                mVelocityTracker.addMovement(event);
+
                 int moveX = (int) event.getRawX();
                 int dX = moveX - mLastDownX;
 
@@ -192,7 +201,11 @@ public class SlidingButton extends RelativeLayout {
                 break;
             }
             case MotionEvent.ACTION_UP: {
-                resetSlider();
+                mVelocityTracker.addMovement(event);
+                //计算手指离开时的瞬时速度
+                mVelocityTracker.computeCurrentVelocity(1000);
+
+                resetSlider(mVelocityTracker.getXVelocity());
                 break;
             }
         }
@@ -221,9 +234,10 @@ public class SlidingButton extends RelativeLayout {
     }
 
     //重置滑块
-    private void resetSlider() {
+    private void resetSlider(float xVelocity) {
+        int range = getRange(xVelocity);
         ValueAnimator animator = null;
-        if(mBgSlider.getLeft() >= mRange){
+        if(mBgSlider.getLeft() >= range){
             //开
             animator = ValueAnimator.ofInt(mBgSlider.getLeft(), mRightBorder);
             animator.addListener(new MyAnimatorListener(){
@@ -257,6 +271,29 @@ public class SlidingButton extends RelativeLayout {
         animator.start();
     }
 
+    //根据速度计算滑动范围值
+    private int getRange(float xVelocity) {
+        //最大速度
+        float maxV = 15500.0f;
+        float minV = 500.0f;
+        int maxRange = (int) (mSliderWidth * 0.7);
+        int minRange = (int) (mSliderWidth * 0.15);
+        float k = maxV * minRange;
+        if(xVelocity < minV){
+            xVelocity = minV;
+        }else if(xVelocity > maxV){
+            xVelocity = maxV;
+        }
+        int range = (int) (k / xVelocity);
+        Log.e("tag", "xVelocity: " + xVelocity + ", range: " + range);
+        if(range > maxRange){
+            range = maxRange;
+        }else if(range < minRange){
+            range = minRange;
+        }
+        return range;
+    }
+
     public void setOnStateChangedListener(OnStateChangedListener listener) {
         this.mOnStateChangedListener = listener;
     }
@@ -284,9 +321,11 @@ public class SlidingButton extends RelativeLayout {
         if (state == NORMAL) {
             mBgSlider.setEnabled(true);
             mIvLoading.setVisibility(GONE);
+            ((AnimationDrawable) mIvLoading.getDrawable()).stop();
         } else if (mState == LOADING) {
             mBgSlider.setEnabled(false);
             mIvLoading.setVisibility(VISIBLE);
+            ((AnimationDrawable) mIvLoading.getDrawable()).start();
         }
         if (mOnStateChangedListener != null) {
             mOnStateChangedListener.onStateChanged(mState);
