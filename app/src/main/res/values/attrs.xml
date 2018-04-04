@@ -59,4 +59,11 @@
         <attr name="progress_drawable" format="reference"/>
     </declare-styleable>
 
+    <declare-styleable name="SlidingRadioButton">
+        <attr name="background_slideRadioButton" format="reference"/>
+        <attr name="background_slide" format="reference"/>
+        <attr name="text_size"/>
+        <attr name="text_color"/>
+    </declare-styleable>
+
 </resources>

@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             mSlidingButton.setCenterText("前往乘客起点");
                         }
                     }
-                }, 200);
+                }, 3000);
                 break;
         }
     }

@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
+import android.support.v4.widget.ViewDragHelper;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
@@ -13,19 +14,22 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MotionEvent;
-import android.view.VelocityTracker;
+import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import cn.bmkp.slidingbutton.R;
 
+import static android.widget.RelativeLayout.TRUE;
+
 
 /**
  * Created by wangpan on 2017/10/25.
  */
 
-public class SlidingButton extends RelativeLayout {
+public class SlidingButton extends FrameLayout {
 
     public static final int NORMAL = 1;
     public static final int LOADING = 2;
@@ -35,6 +39,8 @@ public class SlidingButton extends RelativeLayout {
     //背景布局
     private RelativeLayout mBgButton;
     private ImageView mIvLoading;
+    private ImageView mIvSlider;
+    protected ImageView mIvTips;
     private TextView mTvCenterText;
 
     private int mSliderBackground;
@@ -47,6 +53,7 @@ public class SlidingButton extends RelativeLayout {
     private int mCenterTextColor;
     private float mCenterTextSize;
     private float mSliderImageSize;
+    private int mBgMinWidth;            //底层最小宽度
     private float mTipsImageSize;
     private float mLoadingSize;
     //中间文本textView id
@@ -61,9 +68,10 @@ public class SlidingButton extends RelativeLayout {
     private int mLeftBorder;
     private int mRightBorder;
     private int mLastDownX;
+    protected int mRange;
 
     private OnStateChangedListener mOnStateChangedListener;
-    protected VelocityTracker mVelocityTracker;
+    protected ViewDragHelper mViewDragHelper;
 
     public SlidingButton(Context context) {
         this(context, null);
@@ -99,20 +107,23 @@ public class SlidingButton extends RelativeLayout {
         mLoadingSize = typedArray.getDimension(R.styleable.SlidingButton_loading_size, 18);
         typedArray.recycle();
 
-        //滑块 第一层背景
+        //setBackgroundColor(Color.BLACK);
+
+        //滑块层
         mBgSlider = new RelativeLayout(context);
-        mBgSlider.setId(R.id.sliding_button_slider);
-        mBgSlider.setBackgroundResource(mSliderBackground);
+        if (mSliderBackground != 0) {
+            mBgSlider.setBackgroundResource(mSliderBackground);
+        }
         //滑块左边图标
         if (mSliderImageDrawable != null) {
-            ImageView ivSlider = new ImageView(context);
-            ivSlider.setImageDrawable(mSliderImageDrawable);
-            LayoutParams params = new LayoutParams((int) mSliderImageSize, (int) mSliderImageSize);
+            mIvSlider = new ImageView(context);
+            mIvSlider.setImageDrawable(mSliderImageDrawable);
+            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams((int) mSliderImageSize, (int) mSliderImageSize);
             params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, TRUE);
             params.addRule(RelativeLayout.CENTER_VERTICAL);
             params.leftMargin = (int) dp2px(context, leftMargin);
-            ivSlider.setLayoutParams(params);
-            mBgSlider.addView(ivSlider);
+            mIvSlider.setLayoutParams(params);
+            mBgSlider.addView(mIvSlider);
         }
         //滑块中间文字
         if (!TextUtils.isEmpty(mCenterText)) {
@@ -125,16 +136,16 @@ public class SlidingButton extends RelativeLayout {
             mTvCenterText.setText(mCenterText);
             int w = LayoutParams.WRAP_CONTENT;
             int h = LayoutParams.WRAP_CONTENT;
-            LayoutParams params = new LayoutParams(w, h);
+            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(w, h);
             params.addRule(RelativeLayout.CENTER_IN_PARENT, TRUE);
             mTvCenterText.setLayoutParams(params);
             mBgSlider.addView(mTvCenterText);
         }
-        //加载动画
+        //加载图标
         if (mLoadingDrawable != null) {
             mIvLoading = new ImageView(context);
             mIvLoading.setImageDrawable(mLoadingDrawable);
-            LayoutParams params = new LayoutParams((int) mLoadingSize, (int) mLoadingSize);
+            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams((int) mLoadingSize, (int) mLoadingSize);
             params.addRule(RelativeLayout.CENTER_VERTICAL);
             params.leftMargin = (int) dp2px(context, 8);
             params.addRule(RelativeLayout.RIGHT_OF, mCenterTextId);
@@ -142,27 +153,87 @@ public class SlidingButton extends RelativeLayout {
             mBgSlider.addView(mIvLoading);
         }
 
-        //第二层背景
+        mBgMinWidth = (int) mTipsImageSize;
+
+        //底层背景
         mBgButton = new RelativeLayout(context);
-        mBgButton.setBackgroundResource(mButtonBackground);
+        if (mButtonBackground != 0) {
+            mBgButton.setBackgroundResource(mButtonBackground);
+        }
         if (mTipsImageDrawable != null) {
-            ImageView ivTips = new ImageView(context);
-            ivTips.setImageDrawable(mTipsImageDrawable);
-            LayoutParams params = new LayoutParams((int) mTipsImageSize, (int) mTipsImageSize);
-            params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, TRUE);
-            params.addRule(RelativeLayout.CENTER_VERTICAL);
-            params.leftMargin = (int) dp2px(context, leftMargin);
-            ivTips.setLayoutParams(params);
-            mBgButton.addView(ivTips);
+            mIvTips = new ImageView(context);
+            mIvTips.setImageDrawable(mTipsImageDrawable);
+            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams((int) mTipsImageSize, (int) mTipsImageSize);
+            params.addRule(RelativeLayout.CENTER_IN_PARENT, TRUE);
+            mIvTips.setLayoutParams(params);
+            mBgButton.addView(mIvTips);
         }
 
-        mBgSlider.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-        mBgButton.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        FrameLayout.LayoutParams params1 = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
+        mBgSlider.setLayoutParams(params1);
+        FrameLayout.LayoutParams params2 = new FrameLayout.LayoutParams(mBgMinWidth, FrameLayout.LayoutParams.MATCH_PARENT);
+        params2.leftMargin = -mBgMinWidth;
+        mBgButton.setLayoutParams(params2);
         addView(mBgButton);
         addView(mBgSlider);
 
         setState(NORMAL);
+
+        mViewDragHelper = ViewDragHelper.create(this, mCallback);
     }
+
+    private ViewDragHelper.Callback mCallback = new ViewDragHelper.Callback() {
+        @Override
+        public boolean tryCaptureView(View child, int pointerId) {
+            return child == mBgSlider;
+        }
+
+        @Override
+        public int clampViewPositionHorizontal(View child, int left, int dx) {
+            if (left < mLeftBorder) {
+                left = mLeftBorder;
+            } else if (left > mRightBorder) {
+                left = mRightBorder;
+            }
+            return left;
+        }
+
+        @Override
+        public void onViewPositionChanged(View changedView, int left, int top, int dx, int dy) {
+            //移动滑块
+            FrameLayout.LayoutParams params1 = (FrameLayout.LayoutParams) mBgSlider.getLayoutParams();
+            params1.leftMargin += dx;
+            params1.rightMargin -= dx;
+            mBgSlider.setLayoutParams(params1);
+
+            Log.e("tag", "left: " + left + ", dx: " + dx);
+
+            //移动背景
+            FrameLayout.LayoutParams params2 = (FrameLayout.LayoutParams) mBgButton.getLayoutParams();
+
+            if((params2.leftMargin < 0 && left < mBgMinWidth) || (params2.leftMargin == 0 && left == mBgMinWidth)){
+                params2.leftMargin += dx;
+                params2.width = mBgMinWidth;
+            }
+
+            /*if ((params2.leftMargin < 0 && params2.leftMargin + dx >= 0)
+                    || (params2.width > mBgMinWidth && params2.width + dx >= mBgMinWidth)) {
+                params2.leftMargin = 0;
+                params2.width = left;
+            } else {
+                params2.leftMargin += dx;
+                params2.width = mBgMinWidth;
+            }*/
+            mBgButton.setLayoutParams(params2);
+        }
+
+        @Override
+        public void onViewReleased(View releasedChild, float xvel, float yvel) {
+            super.onViewReleased(releasedChild, xvel, yvel);
+
+        }
+
+    };
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
@@ -171,29 +242,25 @@ public class SlidingButton extends RelativeLayout {
         //滑块宽度
         mSliderWidth = mBgSlider.getWidth();
         //滑动的左边界
-        mLeftBorder = - mBgSlider.getLeft();
+        mLeftBorder = -mBgSlider.getLeft();
         //滑动的右边界
         mRightBorder = mBgSlider.getRight();
+        //区分开或者关的范围
+        mRange = (int) (mSliderWidth * 0.6);
+        Log.d("tag", "mSliderWidth: " + mSliderWidth + ", mLeftBorder: " + mLeftBorder + ", mRightBorder: " + mRightBorder + ", mBgMinWidth: " + mBgMinWidth);
     }
 
-    @Override
+    /*@Override
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN: {
-                if(mVelocityTracker == null){
-                    mVelocityTracker = VelocityTracker.obtain();
-                }else{
-                    mVelocityTracker.clear();
-                }
-                mVelocityTracker.addMovement(event);
                 mLastDownX = (int) event.getRawX();
                 break;
             }
             case MotionEvent.ACTION_MOVE: {
-                mVelocityTracker.addMovement(event);
-
                 int moveX = (int) event.getRawX();
                 int dX = moveX - mLastDownX;
+                Log.e("tag", "==================> dX: " + dX);
 
                 moveSlider(dX);
 
@@ -201,28 +268,49 @@ public class SlidingButton extends RelativeLayout {
                 break;
             }
             case MotionEvent.ACTION_UP: {
-                mVelocityTracker.addMovement(event);
-                //计算手指离开时的瞬时速度
-                mVelocityTracker.computeCurrentVelocity(1000);
-
-                resetSlider(mVelocityTracker.getXVelocity());
+                //resetSlider();
                 break;
             }
         }
         return true;
+    }*/
+
+    /**
+     * ============= ViewDragHelper =============
+     */
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+        return mViewDragHelper.shouldInterceptTouchEvent(ev);
     }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        mViewDragHelper.processTouchEvent(event);
+        return true;
+    }
+
+    @Override
+    public void computeScroll() {
+        if (mViewDragHelper.continueSettling(true)) {
+            invalidate();
+        }
+    }
+
+    /**
+     * ============= ViewDragHelper =============
+     */
 
     //移动滑块
     private void moveSlider(int dX) {
-        if(isEnabled() && mState == NORMAL){
+        if (isEnabled() && mState == NORMAL) {
             int l, r = 0;
-            if(mBgSlider.getLeft() + dX <= mLeftBorder){
+            if (mBgSlider.getLeft() + dX <= mLeftBorder) {
                 l = mLeftBorder;
                 r = mSliderWidth;
-            }else if(mBgSlider.getLeft() + dX >= mRightBorder){
+            } else if (mBgSlider.getLeft() + dX >= mRightBorder) {
                 l = mRightBorder;
                 r = mSliderWidth + mRightBorder;
-            }else{
+            } else {
                 l = mBgSlider.getLeft() + dX;
                 r = mBgSlider.getRight() + dX;
             }
@@ -234,22 +322,21 @@ public class SlidingButton extends RelativeLayout {
     }
 
     //重置滑块
-    private void resetSlider(float xVelocity) {
-        int range = getRange(xVelocity);
+    private void resetSlider() {
         ValueAnimator animator = null;
-        if(mBgSlider.getLeft() >= range){
+        if (mBgSlider.getLeft() >= mRange) {
             //开
             animator = ValueAnimator.ofInt(mBgSlider.getLeft(), mRightBorder);
-            animator.addListener(new MyAnimatorListener(){
+            animator.addListener(new MyAnimatorListener() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     setState(LOADING);
                 }
             });
-        }else{
+        } else {
             //关
             animator = ValueAnimator.ofInt(mBgSlider.getLeft(), mLeftBorder);
-            animator.addListener(new MyAnimatorListener(){
+            animator.addListener(new MyAnimatorListener() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     setState(NORMAL);
@@ -271,29 +358,6 @@ public class SlidingButton extends RelativeLayout {
         animator.start();
     }
 
-    //根据速度计算滑动范围值
-    private int getRange(float xVelocity) {
-        //最大速度
-        float maxV = 15500.0f;
-        float minV = 500.0f;
-        int maxRange = (int) (mSliderWidth * 0.7);
-        int minRange = (int) (mSliderWidth * 0.15);
-        float k = maxV * minRange;
-        if(xVelocity < minV){
-            xVelocity = minV;
-        }else if(xVelocity > maxV){
-            xVelocity = maxV;
-        }
-        int range = (int) (k / xVelocity);
-        Log.e("tag", "xVelocity: " + xVelocity + ", range: " + range);
-        if(range > maxRange){
-            range = maxRange;
-        }else if(range < minRange){
-            range = minRange;
-        }
-        return range;
-    }
-
     public void setOnStateChangedListener(OnStateChangedListener listener) {
         this.mOnStateChangedListener = listener;
     }
@@ -303,6 +367,17 @@ public class SlidingButton extends RelativeLayout {
         super.setEnabled(enabled);
 
         mBgSlider.setEnabled(enabled);
+        if (enabled) {
+            if (mSliderImageDrawable != null) {
+                ((AnimationDrawable) mIvSlider.getDrawable()).start();
+            }
+        } else {
+            if (mSliderImageDrawable != null) {
+                ((AnimationDrawable) mIvSlider.getDrawable()).stop();
+                mIvSlider.setImageDrawable(null);
+                mIvSlider.setImageDrawable(mSliderImageDrawable);
+            }
+        }
     }
 
     /**
@@ -321,11 +396,25 @@ public class SlidingButton extends RelativeLayout {
         if (state == NORMAL) {
             mBgSlider.setEnabled(true);
             mIvLoading.setVisibility(GONE);
-            ((AnimationDrawable) mIvLoading.getDrawable()).stop();
+            if (mSliderImageDrawable != null) {
+                ((AnimationDrawable) mIvSlider.getDrawable()).start();
+            }
+            if (mLoadingDrawable != null) {
+                ((AnimationDrawable) mIvLoading.getDrawable()).stop();
+                mIvLoading.setImageDrawable(null);
+                mIvLoading.setImageDrawable(mLoadingDrawable);
+            }
         } else if (mState == LOADING) {
             mBgSlider.setEnabled(false);
             mIvLoading.setVisibility(VISIBLE);
-            ((AnimationDrawable) mIvLoading.getDrawable()).start();
+            if (mSliderImageDrawable != null) {
+                ((AnimationDrawable) mIvSlider.getDrawable()).stop();
+                mIvSlider.setImageDrawable(null);
+                mIvSlider.setImageDrawable(mSliderImageDrawable);
+            }
+            if (mLoadingDrawable != null) {
+                ((AnimationDrawable) mIvLoading.getDrawable()).start();
+            }
         }
         if (mOnStateChangedListener != null) {
             mOnStateChangedListener.onStateChanged(mState);

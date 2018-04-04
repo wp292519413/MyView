@@ -6,6 +6,7 @@
 
     <color name="transparent">#00FFFFFF</color>
     <color name="white">#FFFFFF</color>
+    <color name="black_content">#42454d</color>
     <color name="text_color1">#3B3B3B</color>
     <color name="text_color2">#787878</color>
     <color name="text_color3">#B5B5B5</color>

@@ -17,20 +17,23 @@
         <activity android:name=".activity.MainActivity">
         </activity>
         <activity android:name=".activity.AActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
         </activity>
         <activity android:name=".activity.BActivity">
         </activity>
         <activity android:name=".activity.WebViewActivity">
         </activity>
         <activity android:name=".activity.WebActivity">
-
         </activity>
         <activity android:name=".ywt.YWTActivity">
+        </activity>
+        <activity android:name=".activity.CActivity">
 
+        </activity>
+        <activity android:name=".activity.DActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
         </activity>
     </application>
 

@@ -9,7 +9,9 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/calenderview" />
             <option value="$PROJECT_DIR$/gestureunlock" />
+            <option value="$PROJECT_DIR$/leakdemo" />
             <option value="$PROJECT_DIR$/slidingbutton" />
           </set>
         </option>

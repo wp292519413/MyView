@@ -7,6 +7,7 @@ import android.graphics.Path;
 import android.graphics.PointF;
 import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -20,11 +21,9 @@ import cn.bmkp.gestureunlock.R;
  */
 public class GestureUnlockView extends View {
 
-    public static final int MODE_SETTING = 1;         //设置密码模式
-    public static final int MODE_UNLOCK = 2;          //解锁模式
+    private Mode mCurrentMode;
 
-    private int mCurrentMode = 0;
-
+    private int mSize;
     private List<GUVPoint> mPoints = new ArrayList<>();
     private int mPointCount = 9;
     private List<GUVPoint> mSelectedPoints = new ArrayList<>();
@@ -36,6 +35,10 @@ public class GestureUnlockView extends View {
     private float mTouchX;                              //触摸位置的Y
 
     private float mTouchY;                              //触摸位置的Y
+
+    public enum Mode {
+        MODE_SETTING, MODE_UNLOCK;
+    }
 
     public GestureUnlockView(Context context) {
         this(context, null);
@@ -50,18 +53,18 @@ public class GestureUnlockView extends View {
         init();
     }
 
-    public void setMode(int mode) {
+    public void setMode(Mode mode) {
         this.mCurrentMode = mode;
     }
 
-    public int getMode() {
+    public Mode getMode() {
         return this.mCurrentMode;
     }
 
-    private OnSlidingCompletedListener mOnSlidingCompletedListener;
+    private OnDrawCompletedListener mOnDrawCompletedListener;
 
-    public void setOnSlidingCompletedListener(OnSlidingCompletedListener listener) {
-        this.mOnSlidingCompletedListener = listener;
+    public void setOnDrawCompletedListener(OnDrawCompletedListener listener) {
+        this.mOnDrawCompletedListener = listener;
     }
 
     private void init() {
@@ -69,29 +72,38 @@ public class GestureUnlockView extends View {
     }
 
     @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
+        int width = getDefaultSize(100, widthMeasureSpec);
+        int height = getDefaultSize(100, heightMeasureSpec);
+        if(width > height){
+            mSize = height;
+        }else if(width < height){
+            mSize = width;
+
+        }
+        setMeasuredDimension(mSize, mSize);
+    }
+
+    @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-
         //初始化点
         initPoints();
     }
 
     //初始化点
     private void initPoints() {
-        // 当前视图的大小
-        float width = getWidth();
-        float height = getHeight();
-
+        Log.e("tag", "mSize: " + mSize);
         //每个圆的直径
-        mPointDiameter = 0;
-        if (width > height) {
-            mPointDiameter = height / 5;
-        } else {
-            mPointDiameter = width / 5;
-        }
-
-        float offsetX = (width - mPointDiameter * 3) / 2;       //每个点的X偏移量
-        float offsetY = (height - mPointDiameter * 3) / 2;      //每个点的Y偏移量
+        mPointDiameter = mSize * 1.0f / 5;
+        Log.e("tag", "mPointDiameter: " + mPointDiameter);
+        //每个点的X偏移量
+        float offsetX = (mSize - mPointDiameter * 3) / 2;
+        Log.e("tag", "offsetX: " + offsetX);
+        //每个点的Y偏移量
+        float offsetY = (mSize - mPointDiameter * 3) / 2;
 
         mPoints.clear();
         for (int i = 0; i < mPointCount; i++) {
@@ -124,14 +136,15 @@ public class GestureUnlockView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        //画已经选好的点的连线
+        //画点
+        drawPoints(canvas);
+        /*//画已经选好的点的连线
         drawSelectedPointLine(canvas);
         //画未选好的点的连线
         drawUnSelectedPointLine(canvas);
-        //画点
-        drawPoints(canvas);
+
         //画箭头
-        drawArrows(canvas);
+        drawArrows(canvas);*/
     }
 
     //画箭头
@@ -189,13 +202,13 @@ public class GestureUnlockView extends View {
         for (int i = 0; i < mPoints.size(); i++) {
             GUVPoint point = mPoints.get(i);
             switch (point.status) {
-                case GUVPoint.STATUS_NORMAL: {
+                case NORMAL: {
                     mPaint.setStyle(Paint.Style.FILL);
                     mPaint.setColor(getResources().getColor(R.color.color_1));
                     canvas.drawCircle(point.x, point.y, mPointDiameter / 6, mPaint);        //画中间小圆
                     break;
                 }
-                case GUVPoint.STATUS_PRESS: {
+                case SELECTED: {
                     mPaint.setStyle(Paint.Style.FILL);
                     mPaint.setColor(getResources().getColor(R.color.white));
                     canvas.drawCircle(point.x, point.y, mPointDiameter / 2 - 5, mPaint);        //白背景
@@ -223,7 +236,7 @@ public class GestureUnlockView extends View {
                 //获取被触摸的点
                 GUVPoint point = getSelectedPoint(mTouchX, mTouchY);
                 if (point != null) {
-                    point.status = GUVPoint.STATUS_PRESS;
+                    point.status = GUVPoint.State.SELECTED;
                     //被选中的点存入一个集合
                     mSelectedPoints.add(point);
                 }
@@ -233,14 +246,14 @@ public class GestureUnlockView extends View {
                 //获取被触摸的点
                 GUVPoint point = getSelectedPoint(mTouchX, mTouchY);
                 if (point != null && !mSelectedPoints.contains(point)) {
-                    point.status = GUVPoint.STATUS_PRESS;
+                    point.status = GUVPoint.State.SELECTED;
                     //被选中的点存入一个集合
                     mSelectedPoints.add(point);
 
                     //获取经过的点
                     GUVPoint passPoint = getPassPoint(mTouchX, mTouchY);
                     if (passPoint != null && !mSelectedPoints.contains(passPoint)) {
-                        passPoint.status = GUVPoint.STATUS_PRESS;
+                        passPoint.status = GUVPoint.State.SELECTED;
                         //经过的点放入倒数第二个
                         mSelectedPoints.add(mSelectedPoints.size() - 1, passPoint);
                     }
@@ -251,10 +264,10 @@ public class GestureUnlockView extends View {
                 mTouchX = -1;
                 mTouchY = -1;
 
-                if (mOnSlidingCompletedListener != null) {
+                if (mOnDrawCompletedListener != null) {
                     String pwd = getResultPassword();
                     int length = getResultPasswordLength();
-                    mOnSlidingCompletedListener.onSlidingCompleted(pwd, length);
+                    mOnDrawCompletedListener.onDrawCompleted(pwd, length);
                 }
                 break;
             }
@@ -459,7 +472,7 @@ public class GestureUnlockView extends View {
     public void resetPoints() {
         mSelectedPoints.clear();
         for (GUVPoint point : mPoints) {
-            point.status = GUVPoint.STATUS_NORMAL;
+            point.status = GUVPoint.State.NORMAL;
         }
         invalidate();
     }
@@ -467,7 +480,13 @@ public class GestureUnlockView extends View {
     /**
      * 绘制完成回调
      */
-    public interface OnSlidingCompletedListener {
-        void onSlidingCompleted(String pwd, int length);
+    public interface OnDrawCompletedListener {
+
+        /**
+         * 绘制图案完成
+         * @param pwd
+         * @param length
+         */
+        void onDrawCompleted(String pwd, int length);
     }
 }

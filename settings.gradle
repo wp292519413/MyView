@@ -1,1 +1,1 @@
-include ':app', ':gestureunlock', ':slidingbutton'
+include ':app', ':gestureunlock', ':slidingbutton', ':leakdemo', ':calenderview'

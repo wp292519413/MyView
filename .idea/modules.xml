@@ -4,7 +4,9 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/MyView.iml" filepath="$PROJECT_DIR$/MyView.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/calenderview/calenderview.iml" filepath="$PROJECT_DIR$/calenderview/calenderview.iml" />
       <module fileurl="file://$PROJECT_DIR$/gestureunlock/gestureunlock.iml" filepath="$PROJECT_DIR$/gestureunlock/gestureunlock.iml" />
+      <module fileurl="file://$PROJECT_DIR$/leakdemo/leakdemo.iml" filepath="$PROJECT_DIR$/leakdemo/leakdemo.iml" />
       <module fileurl="file://$PROJECT_DIR$/slidingbutton/slidingbutton.iml" filepath="$PROJECT_DIR$/slidingbutton/slidingbutton.iml" />
     </modules>
   </component>
